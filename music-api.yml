@@ -1,0 +1,633 @@
+swagger: '2.0'
+info:
+  version: '0.1.0'
+  title: Music Library
+  description: |
+    An API for a library of audio tracks with meta-data that allows consumers to list,
+    download and stream audio files.  Tracks can be listed along with albums, artists
+    and genres, then lists of tracks for these can be retrieved.  This information is
+    derived from the meta-data that should be included in the audio file, e.g. ID3 tags.
+    The API definition has been created to allow myself and other developers to use
+    various technologies to create servers and consumers of the API.  I hope to spawn
+    something in the spirit of [TodoMVC](http://todomvc.com/), that allows the creation
+    of examples that would fill the huge chasm between "beginner tutorials" for technologies
+    and actually having to use these to build significantly sized production projects.
+
+    TODOS:
+      Pagination, search/filter/sort structuring.
+      https://developer.github.com/guides/traversing-with-pagination/
+  contact:
+    name: Glen
+    url: https://github.com/glenpike
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+#host: TODO
+basePath: /v1
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /tracks:
+    get:
+      description: Returns all tracks from the system
+      operationId: listTracks
+      produces:
+        - application/json
+      parameters:
+        - name: search
+          in: query
+          description: Filter by title field #TODO (possibly others)
+          required: false
+          type: string
+        - name: limit
+          in: query
+          description: maximum number of results to return
+          required: false
+          type: integer
+          format: int32
+      tags:
+
+        - Track
+      responses:
+        200:
+          description: tracks response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/TrackSummary'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+    post:
+      description: Creates a new track in the library.
+      operationId: addTrack
+      produces:
+        - application/json
+      parameters:
+        - name: track
+          in: body
+          description: Track to add to the library
+          required: true
+          schema:
+            $ref: '#/definitions/TrackBody'
+      tags:
+
+        - Track
+      responses:
+        200:
+          description: track response
+          schema:
+            $ref: '#/definitions/Track'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+  /tracks/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: ID of track to fetch
+        required: true
+        type: string
+        format: uuid
+    get:
+      description: Returns a track based on a single ID.
+      operationId: findTrackById
+      produces:
+        - application/json
+      tags:
+
+        - Track
+      responses:
+        200:
+          description: track response
+          schema:
+            $ref: '#/definitions/Track'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+    put:
+      description: Updates a track in the library.
+      operationId: updateTrack
+      produces:
+        - application/json
+      parameters:
+        - name: track
+          in: body
+          description: Track data to update in the library
+          #TODO if we change the path that is invalid!
+          required: true
+          schema:
+            $ref: '#/definitions/TrackBody'
+      tags:
+
+        - Track
+      responses:
+        200:
+          description: track response
+          schema:
+            $ref: '#/definitions/Track'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+    delete:
+      description: deletes a single track based on the ID supplied
+      operationId: deleteTrack
+      tags:
+
+        - Track
+      responses:
+        204:
+          description: track deleted
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+  /tracks/{id}/play:
+    parameters:
+      - name: id
+        in: path
+        description: ID of track to play
+        required: true
+        type: string
+        format: uuid
+    get:
+      description: Streams the data from a track based on a single ID.
+      operationId: playTrackById
+      produces:
+        - application/octet-stream
+      tags:
+
+        - Track
+      responses:
+        200:
+          description: track response #TODO headers / partial content, etc.
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+  /tracks/{id}/download:
+    parameters:
+      - name: id
+        in: path
+        description: ID of track to download the file for
+        required: true
+        type: string
+        format: uuid
+    get:
+      description: Returns the audio file for track based on a single ID.
+      operationId: downloadTrackById
+      produces:
+        - audio/x-flac #?
+      tags:
+
+        - Track
+      responses:
+        200:
+          description: track response #TODO headers / partial content, etc.
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+  /albums:
+    get:
+      description: Returns a list of all albums from the system
+      operationId: listAlbums
+      produces:
+        - application/json
+      parameters:
+        - name: search
+          in: query
+          description: name to filter by (TODO)
+          required: false
+          type: string
+        - name: limit
+          in: query
+          description: maximum number of results to return
+          required: false
+          type: integer
+          format: int32
+      tags:
+
+        - Album
+      responses:
+        200:
+          description: A list of albums (Does not contain tracks property for each album)
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Album'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+  /albums/{id}:
+    get:
+      description: Returns an album based on it's ID. #could be name?
+      operationId: findAlbumById
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: ID of album to fetch #(or name)
+          required: true
+          type: string
+          format: uuid
+      tags:
+
+        - Album
+      responses:
+        200:
+          description: An album with a list of all it's tracks
+          schema:
+            $ref: '#/definitions/Album'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+  /artists:
+    get:
+      description: Returns a list of all artists from the system
+      operationId: listArtists
+      produces:
+        - application/json
+      parameters:
+        - name: search
+          in: query
+          description: name to filter by (TODO)
+          required: false
+          type: string
+        - name: limit
+          in: query
+          description: maximum number of results to return
+          required: false
+          type: integer
+          format: int32
+      tags:
+
+        - Artist
+      responses:
+        200:
+          description: A list of artists (Does not contain tracks property for each artist)
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Artist'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+  /artists/{id}:
+    get:
+      description: Returns an artist based on it's ID. #could be name?
+      operationId: findArtistById
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: ID of artist to fetch #(or name)
+          required: true
+          type: string
+          format: uuid
+      tags:
+
+        - Artist
+      responses:
+        200:
+          description: An artist with a list of all it's albums / tracks
+          schema:
+            $ref: '#/definitions/Artist'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+  /genres:
+    get:
+      description: Returns a list of all genres from the system
+      operationId: listGenres
+      produces:
+        - application/json
+      parameters:
+        - name: search
+          in: query
+          description: name to filter by (TODO)
+          required: false
+          type: string
+        - name: limit
+          in: query
+          description: maximum number of results to return
+          required: false
+          type: integer
+          format: int32
+      tags:
+
+        - Genre
+      responses:
+        200:
+          description: A list of genres
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/GenreSummary'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+  /genres/{id}:
+    get:
+      description: Returns an genre based on it's ID. #could be name?
+      operationId: findGenreById
+      produces:
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: ID of genre to fetch #(or name)
+          required: true
+          type: string
+          format: uuid
+      tags:
+
+        - Genre
+      responses:
+        200:
+          description: An genre with it's associated tracks (TODO - albums & artists?)
+          schema:
+            $ref: '#/definitions/Genre'
+        default:
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+definitions:
+  TrackMeta:
+    type: object
+    required:
+      - title
+      - artist
+    description: |
+      Meta data from an ID3 tag, or similar, that describes the
+      track in terms of title, artist, genre, album, etc.
+    properties:
+      artist:
+        description: An array of artist names - those who created the track.
+        type: array
+        items:
+          type: string
+        #collectionFormat: csv
+      album:
+        description: |
+          Name of the album this track is from (if relevant)
+        type: string
+      albumartist:
+        description: The artists that created the album this track may be from.
+        type: array
+        items:
+          type: string
+      disk:
+        type: object
+        description: An album may have more than one disk, so we can number them
+        properties:
+          of:
+            description: How many disks the album has
+            type: integer
+            #format: int32 ?
+          no:
+            description: The number of the disk that this track is on.
+            type: integer
+            #format: int32 ?
+      duration:
+        description: How long the track lasts in seconds.
+        type: number
+        format: float #?
+      genre:
+        description:
+          The genre(s) that the track falls into.
+        type: array
+        items:
+          type: string
+      picture:
+        type: array
+        items:
+          type: string #?
+      title:
+        type: string
+        description: The title of the track, e.g. 'Yellow Submarine'
+      track:
+        type: object
+        description: An disk (or album for a single disk) may have more than one track, so can state the position of this track in an album, along with the total.
+        properties:
+          of:
+            description: How many tracks the disk has
+            type: integer
+            #format: int32 ?
+          no:
+            description: The position of this track on the disk.
+            type: integer
+            #format: int32 ?
+      year:
+        description: The year this track was published
+        type: integer
+        #format: int32 ?
+  TrackSummary:
+    type: object
+    required:
+      - id
+      - path
+      - title
+    properties:
+      id:
+        description: This is a hash of the file path used to reference tracks uniquely.
+        type: string
+        format: uuid
+      path:
+        description: The file path for the audio file the track information relates to.
+        type: string
+        format: absolute_file_path
+      title:
+        description: |
+          The title of the track from the meta data, or the file name if the former is not set.
+        type: string
+  Track:
+    allOf:
+      - $ref: '#/definitions/TrackSummary'
+      - type: object
+        required:
+          - ext
+          - mime
+        properties:
+          id:
+            description: This is a hash of the file path used to reference tracks uniquely.
+            type: string
+            format: uuid
+          ext:
+            description: |
+              The file extension for the audio file referenced by the path, (without a full stop)
+              e.g. 'wav', 'flac'
+            type: string
+          meta:
+            $ref: "#/definitions/TrackMeta"
+          mime:
+            description: |
+              The mime type the server will use for playing this track.
+            type: string
+  TrackBody:
+    type: object
+    description: An object describing the track to create in the library
+    required:
+      - ext
+      - mime
+      - path
+    properties:
+      ext:
+        description: |
+          The file extension for the audio file referenced by the path, (without a full stop)
+          e.g. 'wav', 'flac'
+        type: string
+      mime:
+        description: |
+          The mime type the server should use for streaming this track.
+          #TODO - check if we create this automatically!
+        type: string
+      meta:
+        $ref: "#/definitions/TrackMeta"
+      path:
+        description: The file path for the audio file the track information relates to.
+        type: string
+        format: absolute_file_path
+  AlbumSummary:
+    type: object
+    required:
+      - id
+      - name
+    properties:
+      id:
+        description: A unique identifier for the album
+        type: string
+        format: uuid
+      name:
+        description: It's name
+        type: string
+  Album:
+    allOf:
+      - $ref: '#/definitions/AlbumSummary'
+      - type: object
+        properties:
+          albumartist:
+            description: The artists that created the album this track may be from.
+            type: array
+            items:
+              type: string #todo - make artist summary?
+          disk:
+            description: How many disks the album has
+            type: integer
+            #format: int32 ?
+          genre:
+            description:
+              The genre(s) that the album falls into.
+            type: array
+            items:
+              type: string
+          picture:
+            type: array
+            items:
+              type: string #?
+          tracks:
+            type: array
+            items:
+              $ref: '#/definitions/TrackSummary'
+  ArtistSummary:
+    type: object
+    required:
+      - id
+      - name
+    properties:
+      id:
+        description: A unique identifier for the album
+        type: string
+        format: uuid
+      name:
+        description: It's name
+        type: string
+  Artist:
+    allOf:
+      - $ref: '#/definitions/ArtistSummary'
+      - type: object
+        properties:
+          albums:
+            type: array
+            description: |
+              Optional field - in some responses - for listing all the
+              albums an artist appears on.
+            items:
+              $ref: '#/definitions/AlbumSummary'
+          genre:
+            description: |
+              Optional field. The genre(s) that the tracks created by the artist fall into.
+            type: array
+            items:
+              $ref: '#/definitions/GenreSummary'
+          tracks:
+            type: array
+            description: |
+              Optional field - in some responses - for listing all the
+              tracks an artist appears on.
+            items:
+              $ref: '#/definitions/TrackSummary'
+  GenreSummary:
+    type: object
+    required:
+      - id
+      - name
+    properties:
+      id:
+        description: A unique identifier for the genre
+        type: integer
+        format: int32 #Match up ID3 genre's with integer?
+      name:
+        description: Genre's name
+        type: string
+  Genre:
+    allOf:
+      - $ref: '#/definitions/GenreSummary'
+      - type: object
+        properties:
+          albums:
+            type: array
+            description: |
+              Optional field - in some responses - for listing all the
+              albums a genre appears on.
+            items:
+              $ref: '#/definitions/AlbumSummary'
+          artists:
+            description: |
+              Optional field - all the artists that have tracks with the genre
+            type: array
+            items:
+              $ref: '#/definitions/ArtistSummary'
+          tracks:
+            type: array
+            description: |
+              Optional field - in some responses - for listing all the
+              tracks that have this genre.
+            items:
+              $ref: '#/definitions/TrackSummary'
+  ErrorMessage:
+    type: object
+    required:
+      - code
+      - message
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
