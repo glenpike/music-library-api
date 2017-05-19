@@ -108,6 +108,36 @@ paths:
           description: track response
           schema:
             $ref: '#/definitions/Track'
+          examples:
+            application/json: {
+                "id": "ea66bb51c734b452da2972e14e5228ae",
+                "path": "/path/to/albums/Sasha The Remixes/12 - Londonbeat.flac",
+                "title": "Londonbeat",
+                "ext": "flac",
+                "meta": {
+                  "album": "Sasha The Remixes",
+                  "albumartist": [],
+                  "artist": [
+                    "Sea Of Tranquility (Sasha's Ambient Mix)"
+                  ],
+                  "disk": {
+                    "no": 0,
+                    "of": 0
+                  },
+                  "duration": 390.26666666666665,
+                  "genre": [
+                    "Ambient Trance"
+                  ],
+                  "picture": [],
+                  "title": "Londonbeat",
+                  "track": {
+                    "no": 12,
+                    "of": 0
+                  },
+                  "year": ""
+                },
+                "mime": "audio/x-flac"
+              }
         default:
           description: unexpected error
           schema:
